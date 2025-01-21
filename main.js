@@ -1,15 +1,15 @@
 const GITHUB_TOKEN = import.meta.env.VITE_GITHUB_TOKEN;
 
 async function fetchGitHubRepos(username) {
-    try {
-        const response = await fetch(`http://localhost:3001/api/github/repos?username=${username}`);
-        const data = await response.json();
-        return data;
-    } catch (error) {
-      console.error("Impossible de récupérer les dépôts :", error);
-      throw error;
-    }
+  try {
+    // Faire une requête vers la fonction serverless sur Netlify
+    const response = await fetch(`https://wondrous-cucurucho-cccba2.netlify.app/.netlify/functions/githubProxy?username=${username}`);
+    const data = await response.json();
+    return data;  // Retourner les données (les repos)
+  } catch (error) {
+    console.error('Impossible de récupérer les dépôts:', error);
   }
+}
 
   function getLanguageColor(language) {
     const colors = {
