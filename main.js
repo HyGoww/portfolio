@@ -1,20 +1,10 @@
-const GITHUB_TOKEN = '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';
+const GITHUB_TOKEN = import.meta.env.VITE_GITHUB_TOKEN;
 
 async function fetchGitHubRepos(username) {
-    const apiUrl = `https://api.github.com/users/${username}/repos?per_page=100`;
     try {
-      const response = await fetch(apiUrl, {
-        headers: {
-          Authorization: `token ${GITHUB_TOKEN}`
-        }
-      });
-  
-      if (!response.ok) {
-        throw new Error(`Erreur : ${response.status} - ${response.statusText}`);
-      }
-  
-      const data = await response.json();
-      return data;
+        const response = await fetch(`http://localhost:3001/api/github/repos?username=${username}`);
+        const data = await response.json();
+        return data;
     } catch (error) {
       console.error("Impossible de récupérer les dépôts :", error);
       throw error;
@@ -56,7 +46,7 @@ async function fetchGitHubRepos(username) {
       const data = await response.json();
       return data;
     } catch (error) {
-      console.error(error);
+        displayError(error);
       return {};
     }
   }
