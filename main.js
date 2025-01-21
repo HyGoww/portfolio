@@ -1,13 +1,13 @@
-const GITHUB_TOKEN = import.meta.env.VITE_GITHUB_TOKEN;
+
 
 async function fetchGitHubRepos(username) {
   try {
-    // Faire une requête vers la fonction serverless sur Netlify
-    const response = await fetch(`https://wondrous-cucurucho-cccba2.netlify.app/.netlify/functions/githubProxy?username=${username}`);
+    const response = await fetch(`http://185.185.43.58:3000/api/github/repos?username=${username}`);
     const data = await response.json();
-    return data;  // Retourner les données (les repos)
+    return data;
   } catch (error) {
     console.error('Impossible de récupérer les dépôts:', error);
+    return [];
   }
 }
 
@@ -24,6 +24,7 @@ async function fetchGitHubRepos(username) {
       Ruby: "#701516",
       TypeScript: "#3178c6",
     };
+    
     return colors[language] || "#cccccc";
   }
 
@@ -33,18 +34,14 @@ async function fetchGitHubRepos(username) {
   async function fetchRepoLanguages(owner, repo) {
     const apiUrl = `https://api.github.com/repos/${owner}/${repo}/languages`;
     try {
-      const response = await fetch(apiUrl, {
-        headers: {
-          Authorization: `token ${GITHUB_TOKEN}`
-        }
-      });
-  
+      const response = await fetch(`http://185.185.43.58:3000/api/github/languages?owner=${owner}&repo=${repo}`);
       if (!response.ok) {
         throw new Error(`Erreur lors de la récupération des langages : ${response.status}`);
       }
-  
       const data = await response.json();
+      console.log(`Données brutes de l'API pour ${repo.name}:`, data);
       return data;
+
     } catch (error) {
         displayError(error);
       return {};
@@ -67,32 +64,39 @@ async function fetchGitHubRepos(username) {
     container.innerHTML = ''; 
   
     for (const repo of repos) {
-      const languages = await fetchRepoLanguages(repo.owner.login, repo.name);
-      const languagePercentages = calculateLanguagePercentages(languages);
-      const languageHTML = languagePercentages
-        .map(lang => `
-            <div class="flex items-center mb-2">
-            <span class="w-1/3 text-sm">${lang.language}</span>
-            <div class="w-2/3 bg-gray-200 rounded h-2">
-                <div class="h-2 rounded" style="width: ${lang.percentage}%; background-color: ${getLanguageColor(lang.language)}"></div>
+        const languages = await fetchRepoLanguages(repo.owner.login, repo.name);
+        console.log(`Langages pour ${repo.name}:`, languages);
+
+        const languagePercentages = calculateLanguagePercentages(languages);
+        console.log(`Pourcentages calculés pour ${repo.name}:`, languagePercentages);
+
+
+        const languageHTML = languagePercentages.map(lang => {
+          return `
+            <div class="flex items-center">
+              <span class="w-1/3 text-sm">${lang.language}</span>
+              <div class="w-2/3 rounded">
+                <div class="h-2 rounded" style="width: 100%; background-color: red;"></div>
+              </div>
+              <span class="ml-2 text-sm">${lang.percentage}%</span>
             </div>
-            <span class="ml-2 text-sm">${lang.percentage}%</span>
-            </div>
-        `)
-        .join('');
+          `;
+        }).join('');
+      
   
-      const repoCard = document.createElement('div');
-      repoCard.className = 'bg-white p-4 rounded shadow hover:shadow-lg transition';
-      repoCard.innerHTML = `
-        <h3 class="text-xl font-semibold mb-2">${repo.name}</h3>
-        <p class="text-gray-600 mb-3">${repo.description || "Pas de description disponible."}</p>
-        <div class="mb-3">${languageHTML}</div>
-        <p class="text-sm text-gray-500">⭐ ${repo.stargazers_count} | 🍴 ${repo.forks_count}</p>
-        <a href="${repo.html_url}" target="_blank" class="text-blue-500 hover:underline self-start">
-          Voir sur GitHub
-        </a>
-      `;
-      container.appendChild(repoCard);
+        console.log(languageHTML)
+        const repoCard = document.createElement('div');
+        repoCard.className = 'bg-white p-4 rounded shadow hover:shadow-lg transition';
+        repoCard.innerHTML = `
+          <h3 class="text-xl font-semibold mb-2">${repo.name}</h3>
+          <p class="text-gray-600 mb-3">${repo.description || "Pas de description disponible."}</p>
+          <div class="mb-3">${languageHTML}</div>
+          <p class="text-sm text-gray-500">⭐ ${repo.stargazers_count} | 🍴 ${repo.forks_count}</p>
+          <a href="${repo.html_url}" target="_blank" class="text-blue-500 hover:underline self-start">
+            Voir sur GitHub
+          </a>
+        `;
+        container.appendChild(repoCard);
     }
   }
   
