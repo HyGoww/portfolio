@@ -75,6 +75,19 @@ async function fetchGithubCommits(owner, repo){
       percentage: ((bytes / totalBytes) * 100).toFixed(2),
     }));
   }
+
+  function getDate(isoDate){
+        const date = new Date(isoDate);
+        const formattedDate = date.toLocaleString('fr-FR', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false, 
+        });
+        return formattedDate
+  }
   
   
   
@@ -91,38 +104,42 @@ async function fetchGithubCommits(owner, repo){
         const commitsHTML = commits.map(commit => {
           return `
             <li>- ${commit.message}</li>
-            <p class="text-zinc-500 text-xs">le ${commit.date} par ${commit.author}</p>
+            <p class="text-zinc-500 text-xs">le ${getDate(commit.date)} par ${commit.author}</p>
           `;
         }).join('');
         console.log(commitsHTML);
 
         const languageHTML = languagePercentages.map(lang => {
           return `
-            <div class="flex items-center">
-              <span class="w-1/3 text-sm">${lang.language}</span>
-              <div class="w-2/3 rounded">
-                <div class="h-2 rounded" style="width: 100%; background-color: red;"></div>
-              </div>
-              <span class="ml-2 text-sm">${lang.percentage}%</span>
+            <div class="flex items-center mb-2 gap-2">
+            <span class="text-sm w-1/4">${lang.language}</span>
+
+            <!-- Barre de progression -->
+            <div class="w-1/2 h-2 rounded">
+              <div class="h-2 bg-blue-500 rounded" style="width: ${lang.percentage}%; background-color: ${getLanguageColor(lang.language)};"></div>
             </div>
+
+            <!-- Pourcentage -->
+            <span class="text-sm w-1/4 text-right">${lang.percentage}%</span>
+          </div>
           `;
         }).join('');
       
         const repoCard = document.createElement('div');
         repoCard.className = 'bg-white p-4 rounded shadow hover:shadow-lg transition';
         repoCard.innerHTML = `
-          <h3 class="text-xl font-semibold mb-2">${repo.name}</h3>
+          <h3 class="text-2xl font-semibold mb-2">${repo.name}</h3>
+          <p class="text-xs text-gray-500">⭐ ${repo.stargazers_count} | 🍴 ${repo.forks_count}</p>
           <p class="text-gray-600 mb-3">${repo.description || "Pas de description disponible."}</p>
-          <div class="mb-3">${languageHTML}</div>
-          <p class="text-sm text-gray-500">⭐ ${repo.stargazers_count} | 🍴 ${repo.forks_count}</p>
-
-          <h3 class="text-md font-semibold my-4">Derniers pushs</h3>
-          <div class="flex flex-row">
+          
+          <div class="mt-4 relative">${languageHTML}</div>
+          <div class="flex flex-col mt-4">
+            <h3 class="text-md font-semibold">Derniers commits</h3>
             <ul>
             ${commitsHTML}
             </ul>
           </div>
-          <button class="px-4 bg-blue-700 rounded"><a href="${repo.html_url}" target="_blank" class="text-blue-500 hover:underline self-start" style="text-color: white;">GitHub</a></button>
+          <button class="px-4 mt-4 bg-blue-700 rounded"><a href="${repo.html_url}" target="_blank" class="text-zinc-50 hover:underline self-start">GitHub</a></button>
         `;
         container.appendChild(repoCard);
     }
