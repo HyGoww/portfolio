@@ -13,7 +13,7 @@ const App = () => {
       <ProjectCard />
       <div className="">
         <h2 className=" p-10 text-zinc-800 text-3xl font-bold text-center">
-          Mes Projets GitHub
+          Mes Projets GitHub !
         </h2>
       </div>
       <FetchGithub username="HyGoww" />
