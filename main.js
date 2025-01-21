@@ -11,6 +11,26 @@ async function fetchGitHubRepos(username) {
   }
 }
 
+async function fetchGithubCommits(owner, repo){
+  try{
+    const response = await fetch(`http://185.185.43.58:3000/api/github/commits?owner=${owner}&repo=${repo}`);
+
+    if(!response.ok){
+      throw new Error(`Erreur lors de la récupération des commits : ${response.status}`);
+    }
+    const data = await response.json();
+    const limitedCommits = data.slice(0, 4);
+    return limitedCommits.map(commit => ({
+      author: commit.commit.author.name,
+      message: commit.commit.message,
+      date: commit.commit.author.date
+    }));
+  } catch (error) {
+    console.error('Impossible de récupérer les commits:', error);
+    return [];
+  } 
+}
+
   function getLanguageColor(language) {
     const colors = {
       JavaScript: "#f1e05a",
@@ -39,7 +59,6 @@ async function fetchGitHubRepos(username) {
         throw new Error(`Erreur lors de la récupération des langages : ${response.status}`);
       }
       const data = await response.json();
-      console.log(`Données brutes de l'API pour ${repo.name}:`, data);
       return data;
 
     } catch (error) {
@@ -65,11 +84,17 @@ async function fetchGitHubRepos(username) {
   
     for (const repo of repos) {
         const languages = await fetchRepoLanguages(repo.owner.login, repo.name);
-        console.log(`Langages pour ${repo.name}:`, languages);
 
         const languagePercentages = calculateLanguagePercentages(languages);
-        console.log(`Pourcentages calculés pour ${repo.name}:`, languagePercentages);
 
+        const commits = await fetchGithubCommits(repo.owner.login, repo.name);
+        const commitsHTML = commits.map(commit => {
+          return `
+            <li>- ${commit.message}</li>
+            <p class="text-zinc-500 text-xs">le ${commit.date} par ${commit.author}</p>
+          `;
+        }).join('');
+        console.log(commitsHTML);
 
         const languageHTML = languagePercentages.map(lang => {
           return `
@@ -83,8 +108,6 @@ async function fetchGitHubRepos(username) {
           `;
         }).join('');
       
-  
-        console.log(languageHTML)
         const repoCard = document.createElement('div');
         repoCard.className = 'bg-white p-4 rounded shadow hover:shadow-lg transition';
         repoCard.innerHTML = `
@@ -92,9 +115,14 @@ async function fetchGitHubRepos(username) {
           <p class="text-gray-600 mb-3">${repo.description || "Pas de description disponible."}</p>
           <div class="mb-3">${languageHTML}</div>
           <p class="text-sm text-gray-500">⭐ ${repo.stargazers_count} | 🍴 ${repo.forks_count}</p>
-          <a href="${repo.html_url}" target="_blank" class="text-blue-500 hover:underline self-start">
-            Voir sur GitHub
-          </a>
+
+          <h3 class="text-md font-semibold my-4">Derniers pushs</h3>
+          <div class="flex flex-row">
+            <ul>
+            ${commitsHTML}
+            </ul>
+          </div>
+          <button class="px-4 bg-blue-700 rounded"><a href="${repo.html_url}" target="_blank" class="text-blue-500 hover:underline self-start" style="text-color: white;">GitHub</a></button>
         `;
         container.appendChild(repoCard);
     }
